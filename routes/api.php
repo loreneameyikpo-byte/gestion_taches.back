@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\api\AuthController;
 use App\Http\Controllers\api\ProfilController;
+use Illuminate\Http\Controllers\ProjectController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -18,4 +19,6 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::post('/logout', [AuthController::class, 'logout']);
 Route::put('/profil', [ProfilController::class, 'update']);
 Route::get('/me', [ProfilController::class, 'me']);
+
+Route::apiResource('projects', ProjectController::class);
 });
