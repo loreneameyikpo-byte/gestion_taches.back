@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable(['name', 'description', 'due_date'])]
 class Project extends Model
@@ -24,8 +25,15 @@ class Project extends Model
         return $this->belongsTo(User::class);
     }
 
-    // La relation tasks() (hasMany) sera ajoutée à l'Étape 4
-    // "Gestion des tâches" lorsque le modèle Task existera.
+    /**
+     * Les tâches de ce projet.
+     *
+     * @return HasMany<Task, $this>
+     */
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
+    }
 
     /**
      * @return array<string, string>
@@ -40,9 +48,6 @@ class Project extends Model
 
     protected static function booted(): void
     {
-        // Si la date limite change, on remet le compteur de rappel à zéro :
-        // sans ça, repousser une échéance déjà notifiée empêcherait tout
-        // nouveau rappel d'être envoyé pour la nouvelle date.
         static::saving(function (Project $project) {
             if ($project->isDirty('due_date')) {
                 $project->reminder_sent_at = null;

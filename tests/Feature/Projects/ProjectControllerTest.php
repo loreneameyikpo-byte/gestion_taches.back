@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use App\Models\Task;
 
 class ProjectControllerTest extends TestCase
 {
@@ -142,6 +143,18 @@ class ProjectControllerTest extends TestCase
         $this->assertDatabaseMissing('projects', ['id' => $project->id]);
     }
 
+    public function test_un_utilisateur_ne_peut_pas_supprimer_un_projet_qui_contient_des_taches(): void
+    {
+        $user = User::factory()->create();
+        $project = Project::factory()->for($user)->create();
+        Task::factory()->for($project)->create();
+
+        $response = $this->fromFrontend()->actingAs($user)->deleteJson("/api/projects/{$project->id}");
+
+        $response->assertStatus(409);
+        $this->assertDatabaseHas('projects', ['id' => $project->id]);
+    }
+
     public function test_un_utilisateur_ne_peut_pas_supprimer_le_projet_dun_autre(): void
     {
         $proprietaire = User::factory()->create();
@@ -153,4 +166,6 @@ class ProjectControllerTest extends TestCase
         $response->assertForbidden();
         $this->assertDatabaseHas('projects', ['id' => $project->id]);
     }
+
+    
 }

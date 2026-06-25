@@ -16,14 +16,12 @@ class ProjectController extends Controller
 {
     /**
      * GET /api/projects
-     *
-     * Liste paginée des projets de l'utilisateur connecté (jamais ceux
-     * d'un autre utilisateur).
      */
     public function index(Request $request): AnonymousResourceCollection
     {
         $projects = $request->user()
             ->projects()
+            ->withCount('tasks')
             ->latest()
             ->paginate(15);
 
@@ -49,7 +47,7 @@ class ProjectController extends Controller
     {
         Gate::authorize('view', $project);
 
-        return new ProjectResource($project);
+        return new ProjectResource($project->loadCount('tasks'));
     }
 
     /**
@@ -69,20 +67,16 @@ class ProjectController extends Controller
      *
      * Règle métier du cahier des charges : suppression interdite si le
      * projet contient encore des tâches.
-     *
-     * NOTE (Étape 4) : le modèle Task n'existe pas encore à ce stade du
-     * projet. Dès qu'il sera créé, décommenter le bloc ci-dessous pour
-     * activer réellement cette contrainte.
      */
     public function destroy(Project $project): JsonResponse
     {
         Gate::authorize('delete', $project);
 
-        // if ($project->tasks()->exists()) {
-        //     return response()->json([
-        //         'message' => 'Impossible de supprimer un projet qui contient encore des tâches.',
-        //     ], 409);
-        // }
+        if ($project->tasks()->exists()) {
+            return response()->json([
+                'message' => 'Impossible de supprimer un projet qui contient encore des tâches.',
+            ], 409);
+        }
 
         $project->delete();
 
