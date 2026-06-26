@@ -1,0 +1,7 @@
+# Frontend specific
+.nuxt/
+.output/
+dist/
+.env.local
+.env.*.local
+*.log
