@@ -86,7 +86,11 @@ class TaskController extends Controller
     {
         Gate::authorize('update', $project);
 
-        $task = $project->tasks()->create($request->validated());
+        $data = $request->validated();
+        $data['priority'] = $data['priority'] ?? 'medium';
+        $data['status'] = $data['status'] ?? 'todo';
+
+        $task = $project->tasks()->create($data);
 
         return (new TaskResource($task))
             ->response()
