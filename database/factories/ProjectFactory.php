@@ -23,6 +23,7 @@ class ProjectFactory extends Factory
         return [
             'name' => $this->faker->sentence(3),
             'description' => $this->faker->paragraph(),
+            'start_date' => $this->faker->dateTimeBetween('-1 month', '+1 month')->format('Y-m-d'),
             'due_date' => null,
             'user_id' => User::factory(), // Associe un utilisateur aléatoire à chaque projet
             'reminder' => null, // 50% de chances d'avoir un rappel

@@ -10,19 +10,68 @@ use App\Http\Resources\TaskResource;
 use App\Models\Project;
 use App\Models\Task;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
 
 class TaskController extends Controller
 {
     /**
-     * GET /api/projects/{project}/tasks
+     * GET /api/tasks
+     *
+     * Toutes les tâches de l'utilisateur connecté, tous projets confondus
+     * (utilisé par l'onglet "Tâches" du dashboard). Mêmes filtres que
+     * l'index imbriqué : search, status, priority.
      */
-    public function index(Project $project): AnonymousResourceCollection
+    public function all(Request $request): AnonymousResourceCollection
+    {
+        $tasks = Task::query()
+            ->whereHas('project', fn ($query) => $query->where('user_id', $request->user()->id))
+            ->with('project:id,name')
+            ->when(
+                $request->filled('search'),
+                fn ($query) => $query->where('title', 'like', '%'.$request->string('search').'%')
+            )
+            ->when(
+                $request->filled('status'),
+                fn ($query) => $query->where('status', $request->string('status'))
+            )
+            ->when(
+                $request->filled('priority'),
+                fn ($query) => $query->where('priority', $request->string('priority'))
+            )
+            ->orderBy('due_date')
+            ->latest()
+            ->get();
+
+        return TaskResource::collection($tasks);
+    }
+
+    /**
+     * GET /api/projects/{project}/tasks
+     *
+     * Filtres optionnels en query string :
+     * - search   : recherche partielle dans le titre
+     * - status   : todo | in_progress | done
+     * - priority : low | medium | high
+     */
+    public function index(Project $project, Request $request): AnonymousResourceCollection
     {
         Gate::authorize('view', $project);
 
         $tasks = $project->tasks()
+            ->when(
+                $request->filled('search'),
+                fn ($query) => $query->where('title', 'like', '%'.$request->string('search').'%')
+            )
+            ->when(
+                $request->filled('status'),
+                fn ($query) => $query->where('status', $request->string('status'))
+            )
+            ->when(
+                $request->filled('priority'),
+                fn ($query) => $query->where('priority', $request->string('priority'))
+            )
             ->orderBy('position')
             ->orderBy('created_at')
             ->get();

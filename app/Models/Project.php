@@ -9,38 +9,26 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'description', 'due_date'])]
+#[Fillable(['name', 'description', 'start_date', 'due_date'])]
 class Project extends Model
 {
     /** @use HasFactory<ProjectFactory> */
     use HasFactory;
 
-    /**
-     * Le propriétaire du projet.
-     *
-     * @return BelongsTo<User, $this>
-     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Les tâches de ce projet.
-     *
-     * @return HasMany<Task, $this>
-     */
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class);
     }
 
-    /**
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
+            'start_date' => 'date',
             'due_date' => 'date',
             'reminder_sent_at' => 'datetime',
         ];

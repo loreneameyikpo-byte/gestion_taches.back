@@ -16,6 +16,7 @@ class ProjectResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'description' => $this->description,
+            'start_date' => $this->start_date?->toDateString(),
             'due_date' => $this->due_date?->toDateString(),
             'tasks_count' => $this->whenCounted('tasks'),
             'created_at' => $this->created_at?->toIso8601String(),
