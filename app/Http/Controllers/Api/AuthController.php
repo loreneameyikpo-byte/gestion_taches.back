@@ -27,39 +27,38 @@ class AuthController extends Controller
             'email' => $validatedData['email'],
             'password' => Hash::make($validatedData['password']),
         ]);
-        Auth::login($user);
-        $request->session()->regenerate();
+
+        $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'message' => 'Utilisateur enregistré avec succès.',
             'user' => new UserResource($user),
+            'token' => $token,
         ], 201);
     }
 
     public function login(LoginRequest $request): JsonResponse
     {
-        $credentials = $request->only('email', 'password');
+        $user = User::where('email', $request->email)->first();
 
-        if (!Auth::attempt($credentials, $request->boolean('remember'))) {
+        if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['Les informations d\'identification fournies sont incorrectes.'],
             ]);
         }
 
-        $request->session()->regenerate();
+        $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'message' => 'Connexion réussie.',
-            'user' => new UserResource(Auth::user()),
+            'user' => new UserResource($user),
+            'token' => $token,
         ]);
     }
 
     public function logout(Request $request): JsonResponse
     {
-        Auth::logout();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        $request->user()->currentAccessToken()->delete();
 
         return response()->json([
             'message' => 'Déconnexion réussie.',
@@ -71,8 +70,8 @@ class AuthController extends Controller
         return response()->json([
             'user' => new UserResource($request->user()),
         ]);
-  
+
   }
-  
-  
+
+
 }
